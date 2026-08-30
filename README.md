@@ -42,13 +42,15 @@ configured at any time.
 
 ## Deploying changes
 
-- **Backend**: pushing to `main` on GitHub auto-deploys `gruvle-verify-api` on
-  Render (repo: https://github.com/charan-kumardot/gruvle-verify, public — Render's
-  free tier needs a fetchable repo URL). Env vars are set on the Render service
-  directly, not committed anywhere.
-- **Frontend**: Vercel's GitHub auto-deploy could not be linked programmatically
-  (needs the Vercel GitHub App authorized via their dashboard, which requires
-  interactive OAuth) — redeploy manually from `frontend/`:
-  `npx vercel deploy --prod --token=<VERCEL_TOKEN>`. Connecting `vercel git connect`
-  from the dashboard's Project Settings → Git takes about a minute if you want
-  push-to-deploy instead.
+Neither service auto-deploys on push today — both need the platform's GitHub App
+properly authorized via its dashboard (interactive OAuth, not scriptable), which
+hasn't been done yet. Until then:
+
+- **Backend**: push to `main`, then trigger a deploy:
+  `curl -X POST https://api.render.com/v1/services/srv-da9sbc9srm7s73d71k20/deploys -H "Authorization: Bearer $RENDER_TOKEN"`
+  (repo: https://github.com/charan-kumardot/gruvle-verify, public — Render's free
+  tier needs a fetchable repo URL). Env vars are set on the Render service
+  directly, not committed anywhere — and a value change needs a real redeploy,
+  not just a restart, to take effect (see current_status.md).
+- **Frontend**: redeploy manually from `frontend/`:
+  `npx vercel deploy --prod --token=<VERCEL_TOKEN>`.

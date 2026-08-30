@@ -45,6 +45,49 @@ during that run were deleted from Supabase afterward.
   never gets a chance to trigger without real scroll events — that's a testing
   artifact, not a real-user bug; a person scrolling the actual page sees it fine).
 
+### Speech-to-text and PDF export
+- **Voice input**: a `TranscriptionProvider` abstraction (same pattern as
+  `AIProvider`/`VisionProvider`/`WebSearchProvider`) backed by Groq's free Whisper
+  endpoint (`whisper-large-v3-turbo`). Chose Groq over puter.js (the originally
+  suggested candidate) because it reuses a provider already validated live in this
+  project rather than adding a third-party client-side script with its own
+  reliability/terms; chose it over local Whisper because Render's free-tier
+  instance doesn't have the CPU/RAM to run one at usable latency. A mic button on
+  the verify form records via `MediaRecorder`, uploads to `POST /api/transcribe`,
+  and fills the textarea with the result. Validated end-to-end in a real Chromium
+  browser using `--use-file-for-fake-audio-capture` (a real WAV file standing in
+  for a microphone) against both localhost and the deployed production URLs —
+  recording, transcription, submission, and the resulting report all worked with
+  zero console errors.
+- **PDF export**: generated straight from the structured `VerificationResult` with
+  `reportlab` (pure Python, no system libraries) rather than by rendering the
+  frontend's HTML — same reasoning as the deterministic report-text builders: one
+  source of truth, no separate rendering path to drift from it. Chose reportlab
+  specifically over an HTML-to-PDF engine (WeasyPrint, etc.) because this project
+  already hit one native-dependency build failure on Render (`pydantic-core`
+  needing a Rust toolchain the sandbox forbids) and reportlab has zero native
+  dependencies to repeat that risk with. Exposed at `GET
+  /api/reports/{id}/export.pdf`, one-click download button on the report page.
+  Validated by actually downloading and reading the resulting PDF, both locally
+  and from the deployed production app — real report data, correctly formatted,
+  not a stub.
+- Both features required a live-API check before committing to an approach — e.g.
+  confirming Groq's `/audio/transcriptions` endpoint and exact field names by
+  generating a real WAV file (Windows TTS) and transcribing it, rather than coding
+  against assumed API shape. That habit already paid off twice in earlier phases
+  (Gemini's model names, Groq's chat model catalog); no reason to stop now.
+- **`/api/transcribe` has no auth requirement**, matching `/api/verify`'s existing
+  optional-auth pattern (anonymous quick verification is allowed) — but it's not
+  linked from the public landing page, only from the authenticated verify form, so
+  the abuse surface is smaller than `/api/verify`'s. Worth adding rate limiting to
+  both if abuse becomes a real problem; not done here.
+- **Render's GitHub fetch doesn't auto-deploy on push** the way a proper GitHub
+  App integration would — `autoDeploy: "yes"` was set, but no webhook actually
+  fires (fetching a public repo by bare URL isn't the same as installing Render's
+  GitHub App). Every deploy in this project, including this feature's, needed an
+  explicit `POST /v1/services/{id}/deploys` call after pushing. Same underlying
+  limitation as point 3 below.
+
 ## Real problems hit during deployment (worth knowing before you touch this again)
 
 1. **Render's default Python (3.14) can't build `pydantic-core`.** It's a Rust
@@ -78,9 +121,6 @@ during that run were deleted from Supabase afterward.
 
 ## Known gaps / not built
 
-- **Speech-to-text**: still not evaluated (puter.js vs. Groq Whisper vs. local
-  Whisper) or wired in anywhere.
-- **Report export**: "Copy link" only, no PDF export.
 - **Team/API/Integrations** nav items: correctly out of scope for MVP.
 - **Resend**: key stored, unused — Supabase's own auth email is what's live.
 - **Vercel git integration**: not connected (see point 5 above) — redeploys are a
@@ -102,11 +142,14 @@ during that run were deleted from Supabase afterward.
 
 ## Immediate next steps, in order
 
-1. Decide on and wire up speech-to-text if voice input is actually wanted.
-2. Add a committed Playwright test for signup → verify → report — both real
-   bugs found so far (Phase 1's CORS/threading issue, this phase's deploy
-   config issues) only surfaced under an actual end-to-end run, not unit tests.
-3. Authorize Vercel's GitHub App via the dashboard for push-to-deploy, if that
-   workflow is wanted over manual CLI deploys.
-4. Consider a paid or more resilient search fallback if SearXNG's free-tier
+1. Add a committed Playwright test for signup → verify → report (and now the
+   voice-input and PDF-export paths) — every real bug found across every phase
+   of this project only surfaced under an actual end-to-end run, never from unit
+   tests alone.
+2. Authorize Vercel's GitHub App via the dashboard for push-to-deploy, and look
+   into whether Render's GitHub App can be installed the same way — both
+   platforms currently need a manual CLI/API deploy after every push.
+3. Consider a paid or more resilient search fallback if SearXNG's free-tier
    Render instance proves to be a reliability bottleneck under real usage.
+4. Add rate limiting to `/api/verify` and `/api/transcribe` if anonymous/low-
+   friction abuse becomes a real problem — neither has any today.
