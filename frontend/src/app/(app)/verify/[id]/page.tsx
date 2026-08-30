@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Input";
 import { ReportView } from "@/components/verify/ReportView";
-import { ApiError, deleteReport, getVerification, updateReport } from "@/lib/api";
+import { ApiError, deleteReport, exportReportPdf, getVerification, updateReport } from "@/lib/api";
 import type { VerificationResult } from "@/lib/types";
-import { Check, Copy, Loader2, Star, Trash2 } from "lucide-react";
+import { Check, Copy, Download, Loader2, Star, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -20,6 +20,7 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     getVerification(id)
@@ -73,6 +74,26 @@ export default function ReportPage() {
     setTimeout(() => setCopied(false), 1500);
   }
 
+  async function handleExportPdf() {
+    if (!result) return;
+    setExporting(true);
+    try {
+      const blob = await exportReportPdf(result.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${result.title.slice(0, 60).replace(/[^a-zA-Z0-9 _-]/g, "") || "gruvle-verify-report"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Couldn't export this report as a PDF — please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (error) {
     return <p className="text-sm text-contradicted">{error}</p>;
   }
@@ -94,6 +115,10 @@ export default function ReportPage() {
         <Button variant="secondary" size="sm" onClick={copyLink}>
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? "Copied" : "Copy link"}
+        </Button>
+        <Button variant="secondary" size="sm" onClick={handleExportPdf} disabled={exporting}>
+          {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          {exporting ? "Exporting…" : "Export PDF"}
         </Button>
         <Button variant="ghost" size="sm" onClick={handleDelete}>
           <Trash2 className="h-3.5 w-3.5" />

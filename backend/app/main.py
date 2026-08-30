@@ -6,7 +6,15 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import routes_auth, routes_history, routes_reports, routes_settings, routes_verify, routes_watchlist
+from app.api import (
+    routes_auth,
+    routes_history,
+    routes_reports,
+    routes_settings,
+    routes_transcribe,
+    routes_verify,
+    routes_watchlist,
+)
 from app.config import get_settings
 from app.db.client import is_db_configured
 from app.providers.ai.router import ModelRouter
@@ -46,6 +54,7 @@ app.include_router(routes_reports.router)
 app.include_router(routes_settings.router)
 app.include_router(routes_auth.router)
 app.include_router(routes_watchlist.router)
+app.include_router(routes_transcribe.router)
 
 
 @app.get("/api/health")
@@ -65,4 +74,5 @@ async def status():
         "search_provider_configured": SearXNGProvider(s.searxng_base_url).is_configured(),
         "vision_configured": bool(s.gemini_api_key),
         "email_configured": bool(s.resend_api_key),
+        "voice_input_configured": bool(s.groq_api_key),
     }

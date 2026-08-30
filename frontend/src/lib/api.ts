@@ -39,6 +39,29 @@ async function handle<T>(res: Response): Promise<T> {
   return res.json();
 }
 
+export async function transcribeAudio(blob: Blob): Promise<{ text: string }> {
+  const form = new FormData();
+  form.set("file", blob, "recording.webm");
+  const headers = await authHeaders();
+  const res = await fetch(`${API_URL}/api/transcribe`, { method: "POST", body: form, headers });
+  return handle(res);
+}
+
+export async function exportReportPdf(id: string): Promise<Blob> {
+  const headers = await authHeaders();
+  const res = await fetch(`${API_URL}/api/reports/${id}/export.pdf`, { headers });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail || detail;
+    } catch {
+      // not JSON
+    }
+    throw new ApiError(res.status, detail);
+  }
+  return res.blob();
+}
+
 export async function getStatus(): Promise<StatusResponse> {
   const res = await fetch(`${API_URL}/api/status`);
   return handle(res);

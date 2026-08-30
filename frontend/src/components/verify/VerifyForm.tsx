@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
+import { VoiceInputButton } from "@/components/verify/VoiceInputButton";
 import { ApiError, submitVerification } from "@/lib/api";
 import type { VerificationMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -102,12 +103,19 @@ export function VerifyForm() {
       </div>
 
       {inputKind === "text" && (
-        <Textarea
-          rows={6}
-          placeholder="Paste a claim, message, or listing description to verify..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
+        <div className="relative">
+          <Textarea
+            rows={6}
+            placeholder="Paste a claim, message, or listing description to verify..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="pr-14"
+          />
+          <VoiceInputButton
+            onTranscribed={(spoken) => setText((prev) => (prev ? `${prev} ${spoken}` : spoken))}
+            className="absolute bottom-3 right-3"
+          />
+        </div>
       )}
       {inputKind === "url" && (
         <Input
