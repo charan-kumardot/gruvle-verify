@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 import { getStatus } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -70,8 +71,8 @@ export function AppShell({
         )}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight">
-            Gruvle Verify
+          <Link href="/dashboard">
+            <Logo />
           </Link>
           <button className="lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close menu">
             <X className="h-5 w-5" />

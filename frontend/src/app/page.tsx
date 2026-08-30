@@ -6,6 +6,7 @@ import { FadeIn, FadeInStagger, staggerItem } from "@/components/marketing/FadeI
 import { HeroDemo } from "@/components/marketing/HeroDemo";
 import { InteractiveFlow } from "@/components/marketing/InteractiveFlow";
 import { LinkButton } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 import { LandingTeaser } from "@/components/verify/LandingTeaser";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -177,7 +178,7 @@ export default function Home() {
         )}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-[15px] font-semibold tracking-tight">Gruvle Verify</span>
+          <Logo />
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
             <NavLink href="#features">Features</NavLink>
             <NavLink href="#use-cases">Use cases</NavLink>
@@ -468,7 +469,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 py-10">
           <div className="flex flex-col justify-between gap-8 sm:flex-row">
             <div>
-              <span className="text-sm font-semibold tracking-tight">Gruvle Verify</span>
+              <Logo />
               <p className="mt-2 max-w-xs text-xs text-muted">
                 Gruvle Verify shows evidence, not certainty — every report distinguishes
                 what was found from what remains uncertain.

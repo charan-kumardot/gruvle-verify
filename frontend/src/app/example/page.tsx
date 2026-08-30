@@ -1,14 +1,20 @@
+import { Logo } from "@/components/ui/Logo";
 import { LinkButton } from "@/components/ui/Button";
 import { ReportView } from "@/components/verify/ReportView";
 import { EXAMPLE_REPORT } from "@/lib/exampleReport";
 import Link from "next/link";
 
+export const metadata = {
+  title: "Example Report",
+  description: "See what a Gruvle Verify report actually looks like — claims, evidence, source quality, and contradictions, all shown.",
+};
+
 export default function ExamplePage() {
   return (
     <div className="min-h-screen">
       <header className="flex items-center justify-between px-6 py-5 lg:px-12">
-        <Link href="/" className="text-[15px] font-semibold tracking-tight">
-          Gruvle Verify
+        <Link href="/">
+          <Logo />
         </Link>
         <LinkButton href="/signup" size="sm">
           Sign up

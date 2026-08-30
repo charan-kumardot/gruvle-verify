@@ -182,3 +182,9 @@ export async function updateProfile(update: Partial<Profile>): Promise<Profile> 
   });
   return handle(res);
 }
+
+export async function deleteAccount(): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${API_URL}/api/settings/account`, { method: "DELETE", headers });
+  if (!res.ok) throw new ApiError(res.status, res.statusText);
+}

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Logo } from "@/components/ui/Logo";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useState } from "react";
@@ -31,6 +32,9 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
+        <Link href="/" className="mb-8 inline-flex">
+          <Logo />
+        </Link>
         <h1 className="mb-1 text-2xl font-semibold">Reset your password</h1>
         <p className="mb-6 text-sm text-muted-foreground">
           <Link href="/login" className="font-medium text-accent hover:underline">

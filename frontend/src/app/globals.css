@@ -49,8 +49,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark palette applies automatically when the OS/browser prefers it (unless the
+   user has explicitly picked light via the in-app toggle), and always when the
+   user has explicitly picked dark — see components/ui/ThemeToggle.tsx. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: #0c0a09;
     --surface: #17140f;
     --surface-raised: #1c1917;
@@ -72,6 +75,29 @@
     --neutral-status: #a8a29e;
     --neutral-status-soft: #211f1c;
   }
+}
+
+:root[data-theme="dark"] {
+  --background: #0c0a09;
+  --surface: #17140f;
+  --surface-raised: #1c1917;
+  --border: #292524;
+  --foreground: #f5f5f4;
+  --muted: #a8a29e;
+  --muted-foreground: #d6d3d1;
+
+  --accent: #7ea6d1;
+  --accent-foreground: #0c0a09;
+  --accent-soft: #142132;
+
+  --verified: #4ade80;
+  --verified-soft: #0f2415;
+  --contradicted: #f87171;
+  --contradicted-soft: #2a1211;
+  --caution: #fbbf24;
+  --caution-soft: #2a2007;
+  --neutral-status: #a8a29e;
+  --neutral-status-soft: #211f1c;
 }
 
 * {

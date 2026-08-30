@@ -46,3 +46,15 @@ async def upsert_profile(update: ProfileUpdate, user: CurrentUser = Depends(get_
     query = client.table("profiles").upsert(payload)
     response = await run_in_threadpool(query.execute)
     return response.data[0] if response.data else payload
+
+
+@router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(user: CurrentUser = Depends(get_current_user)):
+    """Deletes the Supabase auth user outright. verifications/profiles/watchlist_items
+    all reference auth.users(id) with ON DELETE CASCADE (see db/schema.sql), so this
+    is the one call needed — no separate table cleanup required."""
+    client = _client_or_503()
+    try:
+        await run_in_threadpool(client.auth.admin.delete_user, user.id)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Failed to delete account. Please try again.") from exc
