@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-30
 
-## Phase: 2 — Deployed to production, validated end-to-end on the live URLs
+## Phase: 3 — Production-polished: branding, dark mode, account lifecycle
 
 **Live:**
 - App: https://gruvle-verify.vercel.app
@@ -15,6 +15,53 @@ The full signup → login → submit a claim → real evidence collection → re
 re-run against these live URLs (not localhost) via a Playwright script, with zero
 console errors and zero failed requests. Test accounts and verifications created
 during that run were deleted from Supabase afterward.
+
+## What changed since Phase 2 (production polish)
+
+- **Branding**: a shield-and-checkmark logo mark (`frontend/src/components/ui/Logo.tsx`)
+  replacing the plain text wordmark everywhere (landing nav, sidebar, auth pages,
+  footer). Favicon, apple-touch-icon, and Open Graph share image are all generated
+  via `next/og`'s `ImageResponse` — no external image editor needed, and they stay
+  in sync with the same shape as the component (duplicated by necessity: Next's
+  special icon/OG files run in a different renderer and can't import React
+  components from the app).
+- **Custom 404 and error pages** replacing Next.js's default unbranded ones.
+- **`robots.ts` / `sitemap.ts`**: public pages (landing, example, login, signup,
+  privacy, terms) indexable; the authenticated app disallowed.
+- **Manual dark/light/system theme toggle** (Settings → Appearance) — the CSS
+  already had a `prefers-color-scheme` dark palette from day one, but no
+  user-facing override. A blocking inline script in `<head>` applies the stored
+  preference before first paint so there's no flash of the wrong theme; verified
+  by reloading with dark set and confirming no flash and correct persistence.
+- **Resend-confirmation-email** action on the login form, shown when Supabase
+  reports an unconfirmed account — this directly closes the gap the real
+  confirmation-email-pointed-to-localhost issue surfaced (see the Auth section
+  below); once the Supabase Site URL is corrected, this button gives users a way
+  to recover without contacting support.
+- **Self-service account deletion** (Settings → Danger zone): `DELETE
+  /api/settings/account` calls Supabase's admin delete-user, which cascades to
+  `verifications`/`profiles`/`watchlist_items` via the FK constraints already in
+  `db/schema.sql` — no manual row cleanup needed. Confirmed end-to-end that the
+  session is actually dead afterward (visiting `/dashboard` post-deletion
+  redirects to `/login`, not a stale authenticated view) — that's the part that
+  actually matters, not just that the button exists.
+  - Minor known artifact: the client's post-delete sign-out call gets a harmless
+    403 from Supabase (`/auth/v1/logout`) since the user no longer exists to log
+    out — cosmetic console noise only, doesn't affect the redirect or session
+    clearing. Not worth suppressing further.
+
+## Known issue requiring action outside this codebase
+
+**Supabase's Site URL / Redirect URL allow-list is still pointed at `localhost:3000`**,
+inherited from local development. This means confirmation emails, magic links, and
+password resets for real users redirect to a dead `localhost` link after the
+underlying action (confirming the email, etc.) already succeeded server-side. This
+can't be fixed from the codebase — it requires the Supabase dashboard (Authentication
+→ URL Configuration) or a Management API personal access token neither of which this
+session has (only the anon/service-role/DB keys, which cover data access, not
+project configuration). **Fix**: set Site URL to `https://gruvle-verify.vercel.app`
+and add both `https://gruvle-verify.vercel.app/auth/callback` and
+`http://localhost:3000/auth/callback` to Redirect URLs.
 
 ## What changed since Phase 1 (functional-but-local MVP)
 
@@ -142,6 +189,9 @@ during that run were deleted from Supabase afterward.
 
 ## Immediate next steps, in order
 
+0. **Fix the Supabase Site URL / Redirect URLs** (see above) — this is the one
+   item actively breaking a real signup/reset flow for real users right now, and
+   it's a 2-minute dashboard change, not a code change.
 1. Add a committed Playwright test for signup → verify → report (and now the
    voice-input and PDF-export paths) — every real bug found across every phase
    of this project only surfaced under an actual end-to-end run, never from unit
