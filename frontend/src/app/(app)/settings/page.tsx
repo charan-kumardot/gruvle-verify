@@ -1,0 +1,92 @@
+"use client";
+
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { getProfile, updateProfile } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+
+const INTERESTS = ["Products", "Websites", "Claims", "Documents", "Listings", "Messages", "Everything"];
+
+export default function SettingsPage() {
+  const [email, setEmail] = useState<string | null>(null);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    getProfile().then((p) => setInterests(p.verification_interests));
+  }, []);
+
+  function toggle(interest: string) {
+    setInterests((prev) => (prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]));
+    setSaved(false);
+  }
+
+  async function save() {
+    await updateProfile({ verification_interests: interests });
+    setSaved(true);
+  }
+
+  async function handlePasswordReset() {
+    if (!email) return;
+    const supabase = createClient();
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/settings`,
+    });
+    alert("Password reset email sent.");
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <h1 className="text-2xl font-semibold">Settings</h1>
+
+      <Card>
+        <CardHeader>
+          <h2 className="text-sm font-semibold">Account</h2>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-xs text-muted">Email</p>
+            <p className="text-sm font-medium">{email}</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={handlePasswordReset}>
+            Send password reset email
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="text-sm font-semibold">Verification interests</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {INTERESTS.map((interest) => (
+              <button
+                key={interest}
+                onClick={() => toggle(interest)}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors",
+                  interests.includes(interest)
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-border hover:bg-accent-soft",
+                )}
+              >
+                {interest}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <Button size="sm" onClick={save}>
+              Save
+            </Button>
+            {saved && <span className="text-sm text-verified">Saved</span>}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
