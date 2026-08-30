@@ -74,10 +74,29 @@ All 28+ tests are hermetic (no network, no external services) — see
 local heuristic tier so results don't depend on what happens to be running on the
 test machine (e.g. a local Ollama daemon).
 
+## Deployment
+
+Deployed on Render (free tier) as two services — see `../render.yaml` for the
+Blueprint reference and `../current_status.md` for the live URLs and how they were
+actually created (via direct Render API calls, not the Blueprint flow). In short:
+
+- `gruvle-verify-api` — this FastAPI app, `rootDir: backend`, Python pinned via
+  `.python-version` (Render's default Python is newer than `pydantic-core` has
+  wheels for — pin it or the build fails on a Rust compile in a read-only sandbox).
+- `gruvle-verify-searxng` — built from `../docker/Dockerfile.searxng`, which layers
+  `../docker/searxng/settings.yml` (enables the JSON search API) onto the official
+  `searxng/searxng` image. A plain `image:` deploy of the upstream image won't work
+  here — there's no way to inject the custom settings.yml into it.
+
+Set `CORS_ORIGINS` on the deployed service to your actual frontend origin(s),
+comma-separated — the default only allows `localhost:3000`.
+
 ## Known limitations (see ../current_status.md for the full list)
 
-- Only `/api/verify`'s pipeline work is offloaded to a threadpool (`run_in_threadpool`)
-  to avoid blocking the event loop for the 15-90s a verification can take. The other
-  routes make quick (sub-second) synchronous Supabase calls directly in `async def`
-  handlers — acceptable for an MVP's request volume, but should move to the same
-  pattern (or an async DB client) before high-concurrency production load.
+- `/api/verify`'s pipeline work and the auth dependency's Supabase call are offloaded
+  to a threadpool (`run_in_threadpool`) so they don't block uvicorn's single event
+  loop — the former for the 15-90s a verification can take, the latter because it
+  runs on every authenticated request. The remaining DB-only routes now use the same
+  pattern too, since it's cheap and this is a single free-tier instance with no
+  horizontal scaling — worth revisiting with an async DB client if this ever needs
+  to run multiple instances under real concurrent load.

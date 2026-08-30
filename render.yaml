@@ -1,8 +1,13 @@
+# Render Blueprint — reference/reproducibility copy of the two services actually
+# deployed (via direct API calls during this build, not this Blueprint). To spin up
+# a fresh environment from scratch: "New > Blueprint" in the Render dashboard,
+# point at this repo, then fill in the `sync: false` secrets manually.
 services:
   - type: web
     name: gruvle-verify-api
     runtime: python
     plan: free
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -21,8 +26,15 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: SEARXNG_BASE_URL
-        sync: false
+        value: https://gruvle-verify-searxng.onrender.com
       - key: RESEND_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: https://gruvle-verify.vercel.app
+
+  - type: web
+    name: gruvle-verify-searxng
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/Dockerfile.searxng
+    dockerContext: ./docker
