@@ -24,3 +24,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Launch kit — marketing assets (screenshots, video, logo exports, copy drafts).
+# Kept on disk in this folder, deliberately not committed: large binaries and
+# drafts that don't belong in the source repo history.
+launch-kit/
