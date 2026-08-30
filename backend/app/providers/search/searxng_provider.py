@@ -15,7 +15,12 @@ from .base import WebSearchProvider
 class SearXNGProvider(WebSearchProvider):
     name = "searxng"
 
-    def __init__(self, base_url: str | None, timeout: float = 10.0):
+    def __init__(self, base_url: str | None, timeout: float = 40.0):
+        # Generous on purpose: a free-tier host (e.g. Render) spins this service
+        # down after ~15 minutes idle, and waking it back up can itself take
+        # 20-30s. A short timeout here doesn't make anything faster — it just
+        # converts a slow-but-real search into a silent "insufficient evidence"
+        # report. See current_status.md for the cold-start mitigation options.
         self.base_url = base_url.rstrip("/") if base_url else None
         self.timeout = timeout
 

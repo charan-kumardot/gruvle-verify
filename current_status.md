@@ -2,6 +2,27 @@
 
 Last updated: 2026-08-30
 
+## Known live issue: SearXNG cold starts cause empty-evidence reports
+
+Discovered while capturing launch-kit screenshots: a verification submitted after
+the SearXNG service had been idle came back with **zero evidence and "insufficient
+evidence" on every claim**, with the degraded-providers banner naming "search". This
+is not a code bug in the verification logic — it's Render's free tier spinning the
+SearXNG service down after ~15 minutes of no traffic; waking it back up can itself
+take 20-30+ seconds, and the backend's search timeout (10s) was giving up before
+that finished, silently falling through to a DuckDuckGo scrape that also failed.
+
+**Fixed**: `SearXNGProvider`'s timeout raised from 10s to 40s
+(`backend/app/providers/search/searxng_provider.py`) — a slow-but-real search beats
+a fast silent failure. **Not fixed** (needs a decision, not just code): the
+underlying cold-start still happens and will still make the *first* verification
+after any idle period noticeably slower (SearXNG waking up, not just searching).
+The standard free-tier fix is an external uptime pinger (e.g. a free UptimeRobot or
+cron-job.org monitor hitting `https://gruvle-verify-searxng.onrender.com/` every
+10-14 minutes) to keep it warm — this needs an account on one of those services,
+which this session doesn't have credentials for. Same cold-start risk applies to
+the backend API service itself, for the same reason.
+
 ## Phase: 3 — Production-polished: branding, dark mode, account lifecycle
 
 **Live:**
