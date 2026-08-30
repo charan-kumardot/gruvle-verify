@@ -1,18 +1,62 @@
-// Shared logo mark. Keep this SVG in sync with app/icon.svg, app/apple-icon.tsx, and
-// app/opengraph-image.tsx — those can't import from here (special Next.js files run
-// in a different renderer), so the shape is duplicated deliberately, not by mistake.
+"use client";
+
+import { motion } from "framer-motion";
+
+// Shared logo mark: a badge with a partial "scanning ring" (evidence being
+// checked) and a checkmark (the verdict) that draws itself in on mount; hovering
+// spins the ring once. Keep this shape in sync with app/icon.svg,
+// app/apple-icon.tsx, and app/opengraph-image.tsx — those run in a static/edge
+// renderer and can't import this component, so the geometry is duplicated there
+// deliberately, not by mistake, and should render as this animation's resting
+// (fully drawn, ring at its rotated position) state.
+
+const RING_R = 9.5;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
+const RING_DASH = `${RING_CIRCUMFERENCE * 0.76} ${RING_CIRCUMFERENCE * 0.24}`;
+
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <rect width="32" height="32" rx="8" fill="#1e3a5f" />
-      <path
-        d="M16 6.5L24.5 10v6.2c0 5.6-3.6 9.9-8.5 11.3-4.9-1.4-8.5-5.7-8.5-11.3V10L16 6.5Z"
+    <motion.svg
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      initial="rest"
+      whileHover="hover"
+      animate="rest"
+    >
+      <rect width="32" height="32" rx="9" fill="#1e3a5f" />
+      <motion.g
+        style={{ transformOrigin: "16px 16px" }}
+        variants={{ rest: { rotate: 0 }, hover: { rotate: 360 } }}
+        transition={{ duration: 1.1, ease: "easeInOut" }}
+      >
+        <motion.circle
+          cx="16"
+          cy="16"
+          r={RING_R}
+          stroke="#f5f0e8"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          opacity="0.85"
+          strokeDasharray={RING_DASH}
+          transform="rotate(-45 16 16)"
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 0.85, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+      </motion.g>
+      <motion.path
+        d="M10.5 16.3L14 20L22 11"
         stroke="#f5f0e8"
-        strokeWidth="1.6"
+        strokeWidth="2.4"
+        strokeLinecap="round"
         strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}
       />
-      <path d="M12 16.2l2.6 2.6L20.2 13" stroke="#f5f0e8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    </motion.svg>
   );
 }
 
